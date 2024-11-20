@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Resume Creator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1300px;
+            padding: 50px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+        }
+
+        /* Form Section */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group textarea {
+            resize: none;
+        }
+
+        /* Qualifications Section */
+        .qualification-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons */
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Resume Preview */
+        .preview-container {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .preview-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-section h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .photo-preview {
+            float: right;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-left: 20px;
+        }
+
+        /* Table Styles */
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .preview-table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* Footer */
+        .signature {
+            margin-top: 30px;
+            text-align: right;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>create your Resume </h1>
+        </div>
+
+        <!-- Form Section -->
+        <form id="resumeForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="contact">Contact Number</label>
+                <input type="text" id="contact" required>
+            </div>
+            <div class="form-group">
+                <label for="address">Address</label>
+                <textarea id="address" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="about">About Me</label>
+                <textarea id="about" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Academic Qualifications</label>
+                <div id="qualifications">
+                    <div class="qualification-grid">
+                        <input type="text" placeholder="Degree" class="degree">
+                        <input type="text" placeholder="Institution" class="institution">
+                        <input type="text" placeholder="Year" class="year">
+                        <input type="text" placeholder="Result" class="result">
+                    </div>
+                </div>
+                <button type="button" id="addQualification">Add More</button>
+            </div>
+
+            <div class="form-group">
+                <label for="skills">Skills</label>
+                <input type="text" id="skills" placeholder="E.g., Programming, Teamwork">
+            </div>
+
+            <div class="form-group">
+                <label for="hobbies">Hobbies</label>
+                <input type="text" id="hobbies" placeholder="E.g., Painting, Reading">
+            </div>
+
+            <div class="form-group">
+                <label for="signature">Your Signature</label>
+                <input type="text" id="signature" placeholder="Type your name for signature">
+            </div>
+
+            <div class="form-group">
+                <label for="photo">Upload Photo</label>
+                <input type="file" id="photo" accept="image/*">
+            </div>
+
+            <button type="button" id="generatePreview">Preview</button>
+            <button type="button" id="generatePdf">Download PDF</button>
+        </form>
+
+        <!-- Resume Preview Section -->
+        <div class="preview-container">
+            <div class="preview-section" id="previewSection">
+                <h2></h2>
+                <div id="previewContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const qualificationsContainer = document.getElementById('qualifications');
+        const previewContent = document.getElementById('previewContent');
+        const photoInput = document.getElementById('photo');
+
+        // Add Qualification
+        document.getElementById('addQualification').addEventListener('click', () => {
+            const newQualification = document.createElement('div');
+            newQualification.className = 'qualification-grid';
+            newQualification.innerHTML = `
+                <input type="text" placeholder="Degree" class="degree">
+                <input type="text" placeholder="Institution" class="institution">
+                <input type="text" placeholder="Year" class="year">
+                <input type="text" placeholder="Result" class="result">
+            `;
+            qualificationsContainer.appendChild(newQualification);
+        });
+
+        // Generate Preview
+        document.getElementById('generatePreview').addEventListener('click', () => {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const contact = document.getElementById('contact').value;
+            const address = document.getElementById('address').value;
+            const about = document.getElementById('about').value;
+            const skills = document.getElementById('skills').value;
+            const hobbies = document.getElementById('hobbies').value;
+            const signature = document.getElementById('signature').value;
+
+            const qualifications = Array.from(
+                document.querySelectorAll('.qualification-grid')
+            ).map(group => {
+                const degree = group.querySelector('.degree').value;
+                const institution = group.querySelector('.institution').value;
+                const year = group.querySelector('.year').value;
+                const result = group.querySelector('.result').value;
+                return { degree, institution, year, result };
+            });
+
+            const photo = photoInput.files[0]
+                ? `<img src="${URL.createObjectURL(photoInput.files[0])}" class="photo-preview">`
+                : '';
+
+            // Populate preview
+            previewContent.innerHTML = `
+                <div>
+                    ${photo}
+                    <p><strong>Name:</strong> ${name}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Contact:</strong> ${contact}</p>
+                    <p><strong>Address:</strong> ${address}</p>
+                </div>
+                <h4>About Me</h4>
+                <p>${about.replace(/\n/g, '<br>')}</p>
+                <h4>Academic Qualifications</h4>
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Degree</th>
+                            <th>Institution</th>
+                            <th>Year</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${qualifications
+                            .map(
+                                q => `
+                            <tr>
+                                <td>${q.degree}</td>
+                                <td>${q.institution}</td>
+                                <td>${q.year}</td>
+                                <td>${q.result}</td>
+                            </tr>`
+                            )
+                            .join('')}
+                    </tbody>
+                </table>
+                <h4>Skills</h4>
+                <p>${skills}</p>
+                <h4>Hobbies</h4>
+                <p>${hobbies}</p>
+                <div class="signature">
+                    <p><strong>Signature:</strong> ${signature}</p>
+                </div>
+            `;
+        });
+
+        // Generate PDF
+        document.getElementById('generatePdf').addEventListener('click', async () => {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            const preview = document.getElementById('previewSection');
+            const canvas = await html2canvas(preview);
+            const imgData = canvas.toDataURL('image/png');
+
+            pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
+            pdf.save('resume.pdf');
+        });
+    </script>
+</body>
+</html>
